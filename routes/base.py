@@ -1,0 +1,10 @@
+from fastapi import FastAPI, APIRouter
+import os
+base_router = APIRouter(prefix="/api/v1",
+                         tags=["/api/v1"])
+
+@base_router.get("/")
+async def welcome():
+    app_name = os.getenv("APP_NAME")
+    app_version = os.getenv("APP_VERSION")
+    return {"Massage":f"{app_name} version {app_version} says Hello, welcome to Rag-APP!"}
