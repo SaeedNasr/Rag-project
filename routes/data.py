@@ -2,11 +2,11 @@ from fastapi import Depends, FastAPI, APIRouter ,UploadFile,status
 from fastapi.responses import JSONResponse
 import os
 from helpers.config import get_settings,Settings
-from controllers import DataController
-from controllers.ProjectController import ProjectController
+from controllers import DataController ,ProjectController ,ProcessController
 import aiofiles
 from models import ResponseSignal
 import logging 
+from .schemes.data import ProcessRequst
 loger = logging.getLogger("uvicorn.error")
 data_router = APIRouter(prefix="/api/v1/data",
                          tags=["api_v1",["data"]])
@@ -15,12 +15,13 @@ data_router = APIRouter(prefix="/api/v1/data",
 async def upload_data(project_id:str,file:UploadFile,
                       app_settings: Settings = Depends(get_settings)):
     datacontroller = DataController()
+    projectcontroller = ProjectController()
     is_valid ,result_signal= datacontroller.validate_uploaded_file(file=file)
     if not is_valid:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
                             content={"message":result_signal.value})
     
-    project_dir_path = ProjectController().get_project_path(project_id=project_id)
+    project_dir_path = projectcontroller.get_project_path(project_id=project_id)
     file_path ,file_id= datacontroller.generate_unique_file_path(original_filename=file.filename,
                                                   project_id=project_id)
     try:
@@ -33,3 +34,19 @@ async def upload_data(project_id:str,file:UploadFile,
         loger.error(f"File upload failed: {e}")
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             content={"message":ResponseSignal.UPLOAD_FAILURE.value})
+    
+@data_router.post("/process/{project_id}")
+async def process_endpoint(project_id:str,process_request:ProcessRequst):
+    file_id = process_request.file_id
+    chunk_size = process_request.chunk_size
+    overlap_size = process_request.overlap_size
+    
+    processcontroller = ProcessController(project_id=project_id)
+    file_content = processcontroller.get_file_content(file_id=file_id)
+    file_chunks = processcontroller.process_file(file_id=file_id,
+                                                 file_content=file_content,chunk_Size=chunk_size,
+                                                 overlap_size=overlap_size)
+    if file_chunks is None or len(file_chunks) == 0:
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                            content={"message":ResponseSignal.FILE_PROCESSING_FAILURE.value})
+    return file_chunks
