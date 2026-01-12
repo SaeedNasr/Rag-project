@@ -15,7 +15,7 @@ class DataController(BaseController):
         if file.size > self.app_settings.MAX_FILE_SIZE_MB * self.size_scale:
             return False, ResponseSignal.FILE_SIZE_EXCEEDED
         return True, ResponseSignal.FILE_VALID.value
-    def generate_unique_file_name(self,original_filename:str,project_id:str):
+    def generate_unique_file_path(self,original_filename:str,project_id:str):
         random_key = super().generate_file_name()
         project_path = ProjectController().get_project_path(project_id=project_id)
         cleaned_file_name = self.get_clean_file_name(original_filename)
@@ -24,7 +24,7 @@ class DataController(BaseController):
             random_key = super().generate_file_name()
             new_file_path = os.path.join(project_path, random_key + "_" + cleaned_file_name)
 
-        return new_file_path
+        return new_file_path, random_key + "_" + cleaned_file_name
 
     def get_clean_file_name(self,original_filename:str):
         cleaned_name = re.sub(r'[^\w.]', ' ', original_filename.strip())
