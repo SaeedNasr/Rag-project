@@ -18,7 +18,7 @@ data_router = APIRouter(prefix="/api/v1/data",
 
 async def upload_data(request:Request,project_id:str,file:UploadFile,
                       app_settings: Settings = Depends(get_settings)):
-    project_model = ProjectModel(db_client=request.app.db_client)
+    project_model = await ProjectModel.create_instance(db_client=request.app.db_client)
     project = await project_model.get_or_create_project(project_id=project_id)
 
     datacontroller = DataController()
@@ -46,7 +46,7 @@ async def upload_data(request:Request,project_id:str,file:UploadFile,
     
 @data_router.post("/process/{project_id}")
 async def process_endpoint(request:Request,project_id:str,process_request:ProcessRequst):
-    project_model = ProjectModel(db_client=request.app.db_client)
+    project_model = await ProjectModel.create_instance(db_client=request.app.db_client)
     project = await project_model.get_or_create_project(project_id=project_id)
     file_id = process_request.file_id
     chunk_size = process_request.chunk_size
@@ -68,7 +68,7 @@ async def process_endpoint(request:Request,project_id:str,process_request:Proces
     chunk_order = i+1,
     chunk_project_id=project.id) 
     for i,chunk in enumerate(file_chunks)]
-    chunk_model = ChunkModel(db_client=request.app.db_client)
+    chunk_model = await ChunkModel.create_instance(db_client=request.app.db_client)
 
     if do_reset:
         deleted_count = await chunk_model.delete_chunks_by_project(project_id=project.id)
