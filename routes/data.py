@@ -10,7 +10,9 @@ from .schemes.data import ProcessRequst
 loger = logging.getLogger("uvicorn.error")
 from models.ProjectModel import ProjectModel
 from models.ChunkModel import ChunkModel
-from models.db_schemes import DataChunk
+from models.db_schemes import DataChunk , Asset
+from models.AssetModel import AssetModel
+from models.enums.AsseTypeEnum import AssetTypeEnum
 data_router = APIRouter(prefix="/api/v1/data",
                          tags=["api_v1",["data"]])
 
@@ -31,13 +33,25 @@ async def upload_data(request:Request,project_id:str,file:UploadFile,
     project_dir_path = projectcontroller.get_project_path(project_id=project_id)
     file_path ,file_id= datacontroller.generate_unique_file_path(original_filename=file.filename,
                                                   project_id=project_id)
+    
     try:
         async with aiofiles.open(file_path,"wb") as f:
             while chunk := await file.read(app_settings.FILE_DEFAULT_CHUNK_SIZE):
                 await f.write(chunk)
+        #store asset record in db
+        asset_model = await AssetModel.create_instance(db_client=request.app.db_client)
+        asset_resource = Asset(
+            asset_type=AssetTypeEnum.FILE.value,
+            asset_name=file_id,
+            asset_size=str(os.path.getsize(file_path)),
+            asset_project_id=project.id,
+           
+        )
+        asset_record = await asset_model.create_asset(asset=asset_resource)
+
         return JSONResponse(status_code=status.HTTP_201_CREATED,
                             content= {"Signal" : ResponseSignal.UPLOAD_SUCCESS.value,
-                                  "file_id":file_id})
+                                  "file_id":str(asset_record.id)})
     except Exception as e:
         loger.error(f"File upload failed: {e}")
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
