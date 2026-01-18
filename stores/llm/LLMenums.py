@@ -12,3 +12,8 @@ class OpenAiEnum(Enum):
     SYSYEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
+
+class CoHereEnum(Enum):
+    SYSYEM = "SYSYEM"
+    USER = "USER"
+    ASSISTANT = "CHATBOT"
