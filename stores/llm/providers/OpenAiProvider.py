@@ -45,7 +45,7 @@ class OpenAiProvider(LLMInterface):
             self.logger.error("OpenAI client is not initialized.")
         
         if not self.generation_model_id:
-            self.logger.error("Generation model ID is not set.")
+            self.logger.error("Generation model ID for OpenAI is not set.")
             return None
         
         max_output_tokens = max_output_tokens if max_output_tokens else self.default_output_max_tokens
