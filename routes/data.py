@@ -1,0 +1,128 @@
+from fastapi import Depends, FastAPI, APIRouter ,UploadFile,status , Request
+from fastapi.responses import JSONResponse
+import os
+from helpers.config import get_settings,Settings
+from controllers import DataController ,ProjectController ,ProcessController
+import aiofiles
+from models import ResponseSignal
+import logging 
+from .schemes.data import ProcessRequst
+logger = logging.getLogger("uvicorn.error")
+from models.ProjectModel import ProjectModel
+from models.ChunkModel import ChunkModel
+from models.db_schemes import DataChunk , Asset
+from models.AssetModel import AssetModel
+from models.enums.AsseTypeEnum import AssetTypeEnum
+data_router = APIRouter(prefix="/api/v1/data",
+                         tags=["api_v1",["data"]])
+
+@data_router.post("/upload/{project_id}")
+
+async def upload_data(request:Request,project_id:str,file:UploadFile,
+                      app_settings: Settings = Depends(get_settings)):
+    project_model = await ProjectModel.create_instance(db_client=request.app.db_client)
+    project = await project_model.get_or_create_project(project_id=project_id)
+
+    datacontroller = DataController()
+    projectcontroller = ProjectController()
+    is_valid ,result_signal= datacontroller.validate_uploaded_file(file=file)
+    if not is_valid:
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                            content={"message":result_signal.value})
+    
+    project_dir_path = projectcontroller.get_project_path(project_id=project_id)
+    file_path ,file_id= datacontroller.generate_unique_file_path(original_filename=file.filename,
+                                                  project_id=project_id)
+    
+    try:
+        async with aiofiles.open(file_path,"wb") as f:
+            while chunk := await file.read(app_settings.FILE_DEFAULT_CHUNK_SIZE):
+                await f.write(chunk)
+        #store asset record in db
+        asset_model = await AssetModel.create_instance(db_client=request.app.db_client)
+        asset_resource = Asset(
+            asset_type=AssetTypeEnum.FILE.value,
+            asset_name=file_id,
+            asset_size=str(os.path.getsize(file_path)),
+            asset_project_id=project.id,
+           
+        )
+        asset_record = await asset_model.create_asset(asset=asset_resource)
+
+        return JSONResponse(status_code=status.HTTP_201_CREATED,
+                            content= {"Signal" : ResponseSignal.UPLOAD_SUCCESS.value,
+                                  "file_id":str(asset_record.id)})
+    except Exception as e:
+        logger.error(f"File upload failed: {e}")
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            content={"message":ResponseSignal.UPLOAD_FAILURE.value})
+
+    
+@data_router.post("/process/{project_id}")
+async def process_endpoint(request:Request,project_id:str,process_request:ProcessRequst):
+    project_model = await ProjectModel.create_instance(db_client=request.app.db_client)
+    project = await project_model.get_or_create_project(project_id=project_id)
+    #file_id = process_request.file_id
+    chunk_size = process_request.chunk_size
+    overlap_size = process_request.overlap_size
+    do_reset = process_request.do_reset
+    asset_model = await AssetModel.create_instance(db_client=request.app.db_client)
+    processcontroller = ProcessController(project_id=project_id)
+    record_count = 0
+    num_of_files = 0
+    project_files_ids = {}
+    if process_request.file_id is not None:
+        asset_record = await asset_model.get_asset_record(asset_project_id=project.id,
+                                                         asset_name=process_request.file_id)
+        if asset_record is None:
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                                content={"message":ResponseSignal.NO_FILES_FOUND_WITH_THIS_ID.value})
+        
+        project_files_ids[asset_record.id] = asset_record.asset_name
+    else:
+        
+        project_assets = await asset_model.get_all_assets(asset_project_id=project.id,
+                                                          asset_type=AssetTypeEnum.FILE.value)
+        project_files_ids = {record.id:record.asset_name for record in project_assets}
+        if len(project_files_ids) == 0:
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                                content={"message":ResponseSignal.NO_FILES_TO_PROCESS.value})
+        
+    
+    chunk_model = await ChunkModel.create_instance(db_client=request.app.db_client)
+
+    if do_reset:
+            deleted_count = await chunk_model.delete_chunks_by_project(project_id=project.id)
+            logger.info(f"Deleted {deleted_count} chunks for project {project_id} during reset.")
+
+    for asset_id,file_id in project_files_ids.items():
+
+        file_content = processcontroller.get_file_content(file_id=file_id)
+        if file_content is None or len(file_content) == 0:
+            logger.error(f"Failed to load content for file {file_id} in project {project_id}. Skipping.")
+            continue
+        file_chunks = processcontroller.process_file(file_id=file_id,
+                                                        file_content=file_content,chunk_Size=chunk_size,
+                                                        overlap_size=overlap_size)
+        if file_chunks is None or len(file_chunks) == 0:
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST,
+                                content={"message":ResponseSignal.FILE_PROCESSING_FAILURE.value})
+
+        file_chunks_records = [DataChunk(
+        chunk_text= chunk.page_content,
+        chunk_metadata = chunk.metadata,
+        chunk_order = i+1,
+        chunk_project_id=project.id,
+        chunk_asset_id=asset_id
+        ) 
+        for i,chunk in enumerate(file_chunks)]
+        
+
+        
+            
+        record_count += await chunk_model.insert_many_chunks(chunks=file_chunks_records, batch_size=100)
+        num_of_files +=1
+    return JSONResponse(status_code=status.HTTP_200_OK,
+                    content={"message":ResponseSignal.FILE_PROCESSING_SUCCESS.value,
+                                "total_chunks_created":record_count,
+                                "num_of_files_processed":num_of_files})
