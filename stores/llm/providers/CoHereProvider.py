@@ -17,7 +17,7 @@ class CoHereProvider(LLMInterface):
         self.generation_model_id = None
 
         self.embedding_model_id = None
-        self.embeddings_size = None 
+        self.embeddings_size = 384 
 
         self.client = cohere.Client(api_key = self.api_key)
 
@@ -30,9 +30,9 @@ class CoHereProvider(LLMInterface):
         self.generation_model_id = model_id
         #to be able to change model on the fly if needed
 
-    def get_embedding_model(self, model_id:str,embedding_size:int):
+    def get_embedding_model(self, model_id:str,embeddings_size:int):
         self.embedding_model_id = model_id
-        self.embeddings_size = embedding_size
+        self.embeddings_size = embeddings_size
 
 
     def generate_text(self, prompt:str,chat_history:list = [],max_output_tokens:int = None, temperature:float = None):
@@ -48,7 +48,7 @@ class CoHereProvider(LLMInterface):
         temperature = temperature if temperature else self.temperature
 
         response = self.client.chat(
-            model = self.get_generation_model,
+            model = self.generation_model_id,
             chat_history = chat_history,
             message = self.process_text(prompt),
             temperature = temperature,
@@ -67,7 +67,7 @@ class CoHereProvider(LLMInterface):
         }
     
 
-    def embed_text(self, text:str,document_type:str  = None):
+    def embed_text(self, texts:str,document_type:str  = None):
         if not self.client :
             self.logger.error("Cohere client has not been initialized")
             return None
@@ -81,7 +81,7 @@ class CoHereProvider(LLMInterface):
 
         response = self.client.embed(
             model = self.embedding_model_id,
-            text = [self.process_text(text)],
+            texts = [self.process_text(texts)],
             input_type = input_type,
             embedding_types = ['float'] 
         )

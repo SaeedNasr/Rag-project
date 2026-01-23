@@ -41,12 +41,12 @@ class QdrantDBProvider(VectorDBInterface):
     def create_collection(self,
                         collection_name:str,
                         embedding_size:int,
-                        do_rest:bool=False):
-        if do_rest :
+                        do_reset:bool=False):
+        if do_reset :
            _ = self.delete_collection(collection_name=collection_name)
 
         if not self.is_collection_existed(collection_name=collection_name):
-            self.client.create_collection(collection_name=collection_name,vectors_config= models.VectorPrams(
+            self.client.create_collection(collection_name=collection_name,vectors_config= models.VectorParams(
                 size = embedding_size,
                 distance = self.distance_method
             ))
@@ -63,6 +63,7 @@ class QdrantDBProvider(VectorDBInterface):
                 collection_name=collection_name,
                 records = [
                     models.Record(
+                        id = [record_id],
                         vector = vector,
                         payload = {
                             "text":text,
@@ -81,16 +82,17 @@ class QdrantDBProvider(VectorDBInterface):
             metadata = [None] * len(texts)
 
         if record_ids is None:
-            record_ids = [None] * len(texts)
+            record_ids = list(range(0,len(texts)))
 
         for i in range(0,len(texts),batch_size):
             batch_end = i + batch_size
             batch_texts = texts[i:batch_end]
             batch_vectors = vectors[i:batch_end]
             batch_metadata = metadata[i:batch_end]
+            batch_record_ids = record_ids[i:batch_end]
 
             batch_records = [
-                models.Record(vector = batch_vectors[x],payload = {"text":batch_texts[x],"metadata":batch_metadata[x]})
+                models.Record(id =batch_record_ids[x], vector = batch_vectors[x],payload = {"text":batch_texts[x],"metadata":batch_metadata[x]})
                 for x in range(len(batch_texts))]
             try:
                 _ = self.client.upload_records(

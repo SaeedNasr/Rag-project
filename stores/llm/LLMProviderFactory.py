@@ -1,5 +1,6 @@
 from .LLMenums import LLMEnum
-from .providers import OpenAiProvider ,CoHereProvider
+from .providers.OpenAiProvider import OpenAiProvider
+from .providers.CoHereProvider import CoHereProvider
 
 class LLMProviderFactory:
     def __init__(self,config:dict):
@@ -19,6 +20,6 @@ class LLMProviderFactory:
                 api_key = self.config.COHERE_API_KEY,
                 default_input_max_characters = self.config.INPUT_DEFALUT_MAX_CHARACTERS,
                 default_output_max_tokens = self.config.GENERATION_DEFAULT_MAX_TOKENS,
-                temprature = self.config.GENERATION_DEFAULT_TEMPRATURE
+                temperature = self.config.GENERATION_DEFAULT_TEMPRATURE
             )
         return None

@@ -3,6 +3,7 @@ from .db_schemes import DataChunk
 from .enums.DataBaseEnum import DataBaseEnum
 from bson.objectid import ObjectId 
 from pymongo import InsertOne
+
 class ChunkModel(BaseDataModel):
     def __init__(self,db_client):
         super().__init__(db_client)
@@ -47,6 +48,7 @@ class ChunkModel(BaseDataModel):
         if record:
             return DataChunk(**record)
         return None
+    
     async def insert_many_chunks(self, chunks:list,batch_size:int =100):
         for i in range(0, len(chunks), batch_size):
             batch = chunks[i:i + batch_size]
@@ -59,4 +61,15 @@ class ChunkModel(BaseDataModel):
         result = await self.collection.delete_many({"chunk_project_id":project_id})
         return result.deleted_count
     
-    
+    async def get_chunks_by_project_id(self,project_id:ObjectId,page_no:int=1,page_size:int=50):
+
+        effective_page = max(1, page_no)
+        skip_count = (effective_page - 1) * page_size
+
+        records = await self.collection.find({
+            "chunk_project_id" :project_id
+        }).skip(
+            skip_count
+            ).limit(page_size).to_list(length = None)
+        
+        return [DataChunk(**record) for record in records]

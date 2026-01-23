@@ -36,12 +36,12 @@ class VectorDBInterface(ABC):
 
     @abstractmethod
     def insert_one(self,collection_name:str,text:str,vector:list,
-                   metadate:dict = None,record_id:str=None):
+                   metadata:dict = None,record_id:str=None):
         pass
 
     @abstractmethod
     def insert_many(self,collection_name:str,text:list,vector:list,
-                   metadate:list = None,record_id:list=None,batch_size:int = 50):
+                   metadata:list = None,record_id:list=None,batch_size:int = 50):
         pass
     
     @abstractmethod
