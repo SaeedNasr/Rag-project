@@ -63,7 +63,3 @@ OPENAI_API_KEY=your-api-key-here
 ```bash
 $ uvicorn main:app --reload --host 0.0.0.0 --port 5000
 ```
-
-## POSTMAN Collection
-You can import the Postman collection from:
-[src/assets/mini-rag-app.postman_collection.json](https://github.com/AbdulrahmanAhmed20072/mini-rag-app/blob/b99c12058703c1aebe54ae9dbd92497904079b2d/src/assets/mini-rag-app.postman_collection.json)
