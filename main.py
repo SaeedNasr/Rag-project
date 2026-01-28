@@ -5,11 +5,12 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from helpers.config import get_settings
 from stores.llm.LLMProviderFactory import LLMProviderFactory
 from stores.VectorDB.VectorDBProviderFactory import VectorDBFactory
-
+from stores.llm.templates.template_parser import TemplateParser
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
+
     app.mongodb_conn = AsyncIOMotorClient(settings.MONGO_DB_URI)
     app.db_client = app.mongodb_conn[settings.MONGO_DB_NAME]
     
@@ -26,6 +27,8 @@ async def lifespan(app: FastAPI):
     app.vectordb_client = vectordb_provider_factory.create(
         provider= settings.VECTOR_DB_BACKEND)
     app.vectordb_client.connect()
+
+    app.template_parser = TemplateParser(language=settings.PRIMARY_LANG,default_language=settings.DEFAULT_LANG)
 
 
     yield

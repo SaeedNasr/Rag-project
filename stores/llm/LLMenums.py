@@ -10,7 +10,7 @@ class OpenAiEnum(Enum):
     ASSISTANT = "assistant"
 
 class CoHereEnum(Enum):
-    SYSYEM = "SYSYEM"
+    SYSTEM = "SYSTEM"
     USER = "USER"
     ASSISTANT = "CHATBOT"
     DOCUMENT = "search_document"

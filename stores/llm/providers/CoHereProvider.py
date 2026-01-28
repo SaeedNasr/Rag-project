@@ -22,7 +22,7 @@ class CoHereProvider(LLMInterface):
         self.client = cohere.Client(api_key = self.api_key)
 
         self.logger = logging.getLogger(__name__)
-
+        self.enums = CoHereEnum
     def process_text(self, text:str):
         return text[:self.default_input_max_characters].strip()
 
@@ -55,11 +55,27 @@ class CoHereProvider(LLMInterface):
             max_tokens = max_output_tokens
         )
 
-        if not response or not response.message:
-            self.logger.error("Error while generating text with Cohere")
+        if not response:
             return None
-        
-        return response.message
+
+        try:
+            # 1. Try standard 'text' attribute (Cohere SDK V1/V2 standard)
+            if hasattr(response, 'text') and response.text:
+                return response.text
+            
+            # 2. Try the nested V2 'message' structure
+            if hasattr(response, 'message'):
+                content = response.message.content
+                if isinstance(content, list) and len(content) > 0:
+                    return content[0].text
+                return str(content)
+                
+            return str(response)
+        except Exception as e:
+            self.logger.error(f"Failed to parse Cohere response: {e}")
+            return "Error parsing response."
+            
+      
     def construct_prompt(self, prompt:str,role:str):
         return {
             "role" : role,

@@ -22,6 +22,7 @@ class OpenAiProvider(LLMInterface):
         self.client = OpenAI(api_key=self.api_key, api_url=self.api_url)
 
         self.logger = logging.getLogger(__name__)
+        self.enums = OpenAiEnum
 
     def process_text(self, text:str):
         return text[:self.default_input_max_characters].strip()

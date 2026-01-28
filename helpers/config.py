@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     VECTOR_DB_BACKEND : str
     VECTOR_DB_PATH : str
     VECTOR_DB_DISTANCE : str = None
+    DEFAULT_LANG :str
+    PRIMARY_LANG :str
 
     class Config:
         env_file = ".env"
