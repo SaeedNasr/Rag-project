@@ -5,7 +5,7 @@ class LLMEnum(Enum):
     COHERE = "COHERE"
     
 class OpenAiEnum(Enum):
-    SYSYEM = "system"
+    SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
 

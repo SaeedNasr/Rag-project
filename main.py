@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
     app.generation_client.get_generation_model(model_id=settings.GENERATION_MODEL_ID)
 
     app.embedding_client = llm_provider_factory.create(provider=settings.EMBEDDING_BACKEND)
-    app.embedding_client.get_embedding_model(model_id=settings.EMBEDING_MODEL_ID,embeddings_size = settings.EMBEDING_MODEL_SIZE)
+    app.embedding_client.get_embedding_model(model_id=settings.EMBEDING_MODEL_ID,embedding_size = settings.EMBEDING_MODEL_SIZE)
     #embeddings_size = settings.EMBEDING_MODEL_SIZE)
     app.vectordb_client = vectordb_provider_factory.create(
         provider= settings.VECTOR_DB_BACKEND)

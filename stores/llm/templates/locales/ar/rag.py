@@ -23,5 +23,8 @@ document_prompt = Template("\n".join([
 footer_prompt = Template("\n".join([
     "استفسار المستخدم: $user_query",
     "\nبناءً على الوثائق أعلاه فقط، قم بتوليد إجابة للمستخدم:",
-    "## الإجابة:"
+    "## السؤال:"
+    "$query",
+    "",
+    "## الإجابة:",
 ]))

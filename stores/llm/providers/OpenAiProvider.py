@@ -19,7 +19,7 @@ class OpenAiProvider(LLMInterface):
         self.embedding_model_id = None
         self.embeddings_size = None 
 
-        self.client = OpenAI(api_key=self.api_key, api_url=self.api_url)
+        self.client = OpenAI(api_key=self.api_key, base_url= self.api_url if self.api_url and len(self.api_url) else None)
 
         self.logger = logging.getLogger(__name__)
         self.enums = OpenAiEnum
@@ -49,10 +49,14 @@ class OpenAiProvider(LLMInterface):
             self.logger.error("Generation model ID for OpenAI is not set.")
             return None
         
+        if chat_history is None:
+            chat_history = []
+        
         max_output_tokens = max_output_tokens if max_output_tokens else self.default_output_max_tokens
         temperature = temperature if temperature else self.temperature
-
-        chat_history = chat_history.append(self.construct_prompt(prompt=prompt,role=OpenAiEnum.USER.value))
+        
+        chat_history.append(self.construct_prompt(prompt=prompt, role=OpenAiEnum.USER.value))
+        #chat_history = chat_history.append(self.construct_prompt(prompt=prompt,role=OpenAiEnum.USER.value))
 
         response = self.client.chat.completions.create(
             model = self.generation_model_id,
@@ -64,9 +68,11 @@ class OpenAiProvider(LLMInterface):
         if not response or not response.choices or len(response.choices) == 0 or not response.choices[0].message:
             self.logger.error("An error while generating text with OpenAi")
 
-        return response.choices[0].message["content"]
+        return response.choices[0].message.content
+    
 
-    def embed_text(self, text:str,document_type:str  = None):
+    
+    def embed_text(self, texts:str,document_type:str  = None):
         if not self.client:
             self.logger.error("OpenAI client is not initialized.")
             return None
@@ -75,12 +81,12 @@ class OpenAiProvider(LLMInterface):
             return None
         
         response = self.client.embeddings.create(model = self.embedding_model_id,
-                                                    input = text)
+                                                    input = texts)
         
-        if not response or not response.data or len(response.data) == 0 or not response.data[0].embeddings:
+        if not response or not response.data or len(response.data) == 0 or not response.data[0].embedding:
             self.logger.error("An error while embedding text with OpenAi")
             return None 
         
-        return response.data[0].embeddings
+        return response.data[0].embedding
 
 

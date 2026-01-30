@@ -20,5 +20,8 @@ document_prompt = Template("\n---\nDOCUMENT ID: $doc_num\nCONTENT: $chunk_text\n
 footer_prompt = Template("\n".join([
     "USER QUERY: $user_query",
     "\nBased strictly on the documents above, provide the final answer:",
+    "َ## Query",
+    "$query",
+    "",
     "## Answer:"
 ]))

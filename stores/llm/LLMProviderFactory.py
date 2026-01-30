@@ -13,7 +13,7 @@ class LLMProviderFactory:
                 api_url = self.config.OPENAI_API_URL,
                 default_input_max_characters = self.config.INPUT_DEFALUT_MAX_CHARACTERS,
                 default_output_max_tokens = self.config.GENERATION_DEFAULT_MAX_TOKENS,
-                temprature = self.config.GENERATION_DEFAULT_TEMPRATURE
+                temperature = self.config.GENERATION_DEFAULT_TEMPRATURE
             )
         elif provider == LLMEnum.COHERE.value:
             return CoHereProvider(
