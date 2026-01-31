@@ -23,8 +23,8 @@ This is a minimal implementation of the RAG (Retrieval-Augmented Generation) mod
 export PS1="\[\033[01;32m\]\u@\h:\w\n\[\033[00m\]\$ "
 ```
 
-### (optional) Run Ollama Local LLM Server using Colab + Ngrok
-- check the [notebook](https://colab.research.google.com/drive/1kDoLkd72--wLWVP7KiHuNlA5mGTu3EXp?usp=sharing)
+### (optional) Run Ollama Local LLM Server using Colab + Ngrok - The notebook contains embedding and generation models0
+- check the [notebook](https://colab.research.google.com/drive/1OtdsJail3ez1CxzUTBKVdvIQ-tB7MabZ?usp=sharing)
 
 ## Installation
 
