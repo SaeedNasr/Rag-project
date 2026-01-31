@@ -96,7 +96,7 @@ async def search_index(request:Request,project_id:str,search_request:SearchReque
                                    embedding_client=request.app.embedding_client,
                                    template_parser = request.app.template_parser)
     
-    results = nlp_controller.search_vector_db_collection(project=project,texts=search_request.text,limit=search_request.limit)
+    results = await nlp_controller.search_vector_db_collection(project=project,texts=search_request.text,limit=search_request.limit)
 
     if not results:
         return JSONResponse(status_code = status.HTTP_400_BAD_REQUEST,content = {
@@ -119,7 +119,7 @@ async def search_index(request:Request,project_id:str,search_request:SearchReque
                                    embedding_client=request.app.embedding_client,
                                    template_parser = request.app.template_parser)
     
-    answer,full_prompt,chat_history = nlp_controller.rag_query_answer(
+    answer,full_prompt,chat_history = await nlp_controller.rag_query_answer(
         project=project,
         query=search_request.text,
         limit=search_request.limit

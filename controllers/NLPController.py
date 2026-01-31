@@ -55,7 +55,7 @@ class NLPController(BaseController):
 
         return True
     
-    def search_vector_db_collection(self,project:Project,texts:str,limit:int =10):
+    async def search_vector_db_collection(self,project:Project,texts:str,limit:int =10):
         #1:get collection name 
         collection_name  = self.create_collection_name(project_id=project.project_id)
         #2:embd the text
@@ -71,9 +71,9 @@ class NLPController(BaseController):
 
         return results
     
-    def rag_query_answer(self,project:Project,query:str,limit:int=10):
+    async def rag_query_answer(self,project:Project,query:str,limit:int=10):
         #1:retreve related docs
-        retrived_doctumetns = self.search_vector_db_collection(project=project,texts=query,limit=limit)
+        retrived_doctumetns = await self.search_vector_db_collection(project=project,texts=query,limit=limit)
 
         if not retrived_doctumetns or len(retrived_doctumetns)==0:
             return None

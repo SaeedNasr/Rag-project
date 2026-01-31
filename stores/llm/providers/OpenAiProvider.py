@@ -38,7 +38,7 @@ class OpenAiProvider(LLMInterface):
     def construct_prompt(self, prompt:str,role:str):
         return {
             "role" : role,
-            "prompt": self.process_text(prompt)
+            "content": self.process_text(prompt)
         }
     
     def generate_text(self, prompt:str,chat_history:list = [],max_output_tokens:int = None, temperature:float = None):
@@ -57,6 +57,7 @@ class OpenAiProvider(LLMInterface):
         
         chat_history.append(self.construct_prompt(prompt=prompt, role=OpenAiEnum.USER.value))
         #chat_history = chat_history.append(self.construct_prompt(prompt=prompt,role=OpenAiEnum.USER.value))
+
 
         response = self.client.chat.completions.create(
             model = self.generation_model_id,
